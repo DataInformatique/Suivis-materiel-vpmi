@@ -7,4 +7,5 @@ pydantic>=2.11         # pydantic-core fournit des wheels récents (cp314)
 msal>=1.31
 requests>=2.32
 python-dotenv>=1.0
+python-multipart>=0.0.9
 openpyxl>=3.1

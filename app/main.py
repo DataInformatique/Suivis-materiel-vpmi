@@ -11,12 +11,13 @@ import secrets
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .graph import GraphError, client
+from .importer import parse_rows, rows_from_bytes
 from .schema import FIELD_BY_INTERNAL, FIELDS, INTERNAL_NAMES
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -120,6 +121,40 @@ def create_materiels_bulk(payload: list[dict[str, Any]]) -> dict[str, Any]:
         except GraphError as exc:
             errors.append({"ligne": i + 1, "detail": str(exc)})
     return {"created": len(created), "errors": errors}
+
+
+@app.post("/api/import", dependencies=[Depends(check_auth)])
+async def import_file(
+    file: UploadFile = File(...),
+    site: str = Form(""),
+    dry_run: bool = Form(False),
+) -> dict[str, Any]:
+    """Importe un fichier Excel/CSV. dry_run=true : aperçu sans écrire."""
+    content = await file.read()
+    try:
+        rows = rows_from_bytes(content, file.filename or "fichier.xlsx")
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Lecture du fichier impossible : {exc}")
+
+    parsed = parse_rows(rows, site or None)
+    if not parsed:
+        raise HTTPException(status_code=400, detail="Aucun matériel reconnu dans le fichier.")
+
+    if dry_run:
+        return {"detected": len(parsed), "created": 0, "errors": [], "preview": parsed[:12]}
+
+    created = 0
+    errors: list[dict[str, Any]] = []
+    for i, fields in enumerate(parsed):
+        try:
+            _check_required(fields)
+            client.create_item(fields)
+            created += 1
+        except HTTPException as exc:
+            errors.append({"ligne": i + 1, "detail": exc.detail})
+        except GraphError as exc:
+            errors.append({"ligne": i + 1, "detail": str(exc)})
+    return {"detected": len(parsed), "created": created, "errors": errors}
 
 
 @app.put("/api/materiels/{item_id}", dependencies=[Depends(check_auth)])

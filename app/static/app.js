@@ -40,6 +40,15 @@ function suiviApp() {
     bulkOpen: false,
     bulkSaving: false,
     bulkRows: [],
+    // pagination (vue Parc)
+    page: 1,
+    perPage: 12,
+    // import de fichier
+    importOpen: false,
+    importFile: null,
+    importSite: "",
+    importBusy: false,
+    importResult: null,
     toasts: [],
 
     nav: [
@@ -61,7 +70,9 @@ function suiviApp() {
       this.ready = true;
       this.refreshIcons();
       if (this.cfg.configured && this.authed) this.load();
-      ["modalOpen", "deleteTarget", "assignTarget", "bulkOpen", "bulkRows", "items", "loading", "view", "filterCat", "filterSite", "filterEtat", "filterUser", "search"].forEach((p) => this.$watch(p, () => this.refreshIcons()));
+      ["modalOpen", "deleteTarget", "assignTarget", "bulkOpen", "bulkRows", "importOpen", "items", "loading", "view", "filterCat", "filterSite", "filterEtat", "filterUser", "search"].forEach((p) => this.$watch(p, () => this.refreshIcons()));
+      // revenir à la page 1 quand les filtres/la recherche changent
+      ["filterCat", "filterStatut", "filterSite", "filterEtat", "filterUser", "search", "view"].forEach((p) => this.$watch(p, () => { this.page = 1; }));
     },
 
     refreshIcons() { this.$nextTick(() => window.lucide && lucide.createIcons()); },
@@ -159,18 +170,26 @@ function suiviApp() {
         .map(([label, count], idx) => ({ label, count, pct: Math.round((count / total) * 100), color: CAT_COLORS[idx % CAT_COLORS.length] }));
     },
     donutTotal() { return this.base().length; },
+    // Donut CSS (conic-gradient) avec angles EXACTS basés sur les comptes (aucun trou d'arrondi).
     donutStyle() {
       const dist = this.categoryDist();
-      if (!dist.length) return "background:#e2e8f0";
+      const total = dist.reduce((s, c) => s + c.count, 0);
+      if (!total) return "background:#e2e8f0";
       let acc = 0; const stops = [];
-      dist.forEach((c) => { const s = (acc / 100) * 360; acc += c.pct; const e = (acc / 100) * 360; stops.push(`${c.color} ${s}deg ${e}deg`); });
+      dist.forEach((c) => {
+        const s = (acc / total) * 360;
+        acc += c.count;
+        const e = (acc / total) * 360;
+        stops.push(`${c.color} ${s}deg ${e}deg`);
+      });
       return `background: conic-gradient(${stops.join(",")})`;
     },
     siteDist() {
       const b = this.base(); const counts = {};
       b.forEach((i) => { const s = i.Site || "—"; counts[s] = (counts[s] || 0) + 1; });
-      const max = Math.max(1, ...Object.values(counts));
-      return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([label, count]) => ({ label, count, pct: Math.round((count / max) * 100) }));
+      const total = b.length || 1;
+      return Object.entries(counts).sort((a, b) => b[1] - a[1])
+        .map(([label, count]) => ({ label, count, pct: Math.round((count / total) * 100) }));
     },
 
     // ---------- alertes & attributions ----------
@@ -310,6 +329,40 @@ function suiviApp() {
         await this.load();
       } catch (e) { this.toast(e.message, "error"); }
       finally { this.bulkSaving = false; }
+    },
+
+    // ---------- pagination (vue Parc) ----------
+    pageCount() { return Math.max(1, Math.ceil(this.filtered().length / this.perPage)); },
+    paged() {
+      const p = Math.min(this.page, this.pageCount());
+      return this.filtered().slice((p - 1) * this.perPage, p * this.perPage);
+    },
+    goPage(n) { this.page = Math.min(Math.max(1, n), this.pageCount()); this.refreshIcons(); },
+
+    // ---------- import de fichier (Excel/CSV) ----------
+    openImport() { this.importFile = null; this.importSite = ""; this.importResult = null; this.importOpen = true; this.refreshIcons(); },
+    onImportFile(e) { this.importFile = e.target.files[0] || null; this.importResult = null; },
+    async sendImport(dryRun) {
+      if (!this.importFile) { this.toast("Choisissez un fichier", "error"); return; }
+      this.importBusy = true;
+      try {
+        const fd = new FormData();
+        fd.append("file", this.importFile);
+        fd.append("site", this.importSite);
+        fd.append("dry_run", dryRun ? "true" : "false");
+        const h = {};
+        if (this.cfg.password_required && this.password) h["X-App-Password"] = this.password;
+        const r = await fetch("/api/import", { method: "POST", headers: h, body: fd });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.detail || ("Erreur " + r.status));
+        if (dryRun) { this.importResult = d; this.refreshIcons(); }
+        else {
+          this.toast(`${d.created} matériel(s) importé(s)` + (d.errors && d.errors.length ? `, ${d.errors.length} erreur(s)` : ""));
+          this.importOpen = false;
+          await this.load();
+        }
+      } catch (e) { this.toast(e.message, "error"); }
+      finally { this.importBusy = false; }
     },
 
     askDelete(it) { this.deleteTarget = it; },
