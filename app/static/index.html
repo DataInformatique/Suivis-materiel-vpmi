@@ -131,40 +131,46 @@
                 <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100"><h2 class="font-bold text-slate-900">Matériel attribué</h2><button @click="go('attribue')" class="text-sm text-brand-600 font-semibold hover:underline">Voir tout</button></div>
                 <div class="overflow-x-auto">
                   <table class="w-full text-sm whitespace-nowrap">
-                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold">Catégorie</th><th class="px-3 py-2.5 font-semibold">Pays</th><th class="px-3 py-2.5 font-semibold">Marque</th><th class="px-3 py-2.5 font-semibold">Modèle</th><th class="px-3 py-2.5 font-semibold">Qté</th><th class="px-3 py-2.5 font-semibold">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right">Actions</th></tr></thead>
+                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold">Catégorie</th><th class="px-3 py-2.5 font-semibold">Marque</th><th class="px-3 py-2.5 font-semibold">Modèle</th><th class="px-3 py-2.5 font-semibold">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right">Actions</th></tr></thead>
                     <tbody>
                       <template x-for="it in attribues().slice(0,7)" :key="it.id">
                         <tr class="border-t border-slate-50 hover:bg-slate-50/70">
-                          <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i><span class="text-slate-700" x-text="it.Categorie"></span></div></td>
-                          <td class="px-3 py-3 text-slate-600" x-text="it.Site || '—'"></td>
+                          <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-slate-700" x-text="it.Categorie"></span></div></td>
                           <td class="px-3 py-3 font-medium text-slate-800" x-text="it.Marque || '—'"></td>
                           <td class="px-3 py-3 text-slate-600" x-text="it.Modele || '—'"></td>
-                          <td class="px-3 py-3 text-slate-600" x-text="it.Quantite ?? '—'"></td>
                           <td class="px-3 py-3"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)"><span class="w-1.5 h-1.5 rounded-full" :class="etatDot(it.Etat)"></span><span x-text="it.Etat || '—'"></span></span></td>
                           <td class="px-3 py-3 text-slate-600" x-text="it.Utilisateur || '—'"></td>
                           <td class="px-3 py-3"><div class="flex items-center justify-end gap-1"><button @click="openEdit(it)" class="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-4 h-4"></i></button><button @click="askDelete(it)" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
                         </tr>
                       </template>
-                      <tr x-show="attribues().length===0"><td colspan="8" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
+                      <tr x-show="attribues().length===0"><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
                     </tbody>
                   </table>
                 </div>
               </div>
 
               <!-- Donut + Stock -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5 h-full flex flex-col">
                   <h2 class="font-bold text-slate-900 mb-4">Répartition par catégorie</h2>
                   <div class="flex items-center gap-5">
-                    <div class="relative w-36 h-36 shrink-0 rounded-full shadow-inner" :style="donutStyle()"><div class="absolute inset-[24%] bg-white rounded-full flex flex-col items-center justify-center shadow"><span class="text-2xl font-extrabold text-slate-900" x-text="donutTotal()"></span><span class="text-[10px] text-slate-400">équipements</span></div></div>
+                    <div class="relative w-32 h-32 shrink-0 rounded-full" :style="donutStyle()"><div class="absolute inset-[26%] bg-white rounded-full flex flex-col items-center justify-center"><span class="text-2xl font-extrabold text-slate-900" x-text="donutTotal()"></span><span class="text-[10px] text-slate-400">équip.</span></div></div>
                     <div class="flex-1 space-y-1.5">
                       <template x-for="c in categoryDist()" :key="c.label">
-                        <div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full" :style="`background:${c.color}`"></span><span class="text-slate-600" x-text="c.label"></span><span class="ml-auto font-semibold text-slate-800" x-text="c.pct+'%'"></span><span class="text-slate-400 w-7 text-right" x-text="'('+c.count+')'"></span></div>
+                        <div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background:${c.color}`"></span><span class="text-slate-600 truncate" x-text="c.label"></span><span class="ml-auto font-semibold text-slate-800" x-text="c.pct+'%'"></span><span class="text-slate-400 w-7 text-right" x-text="'('+c.count+')'"></span></div>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="mt-5 pt-4 border-t border-slate-100 flex-1">
+                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Répartition par pays</h3>
+                    <div class="space-y-2.5">
+                      <template x-for="s in siteDist()" :key="s.label">
+                        <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-600" x-text="s.label"></span><span class="font-semibold text-slate-700"><span x-text="s.count"></span> · <span x-text="s.pct+'%'"></span></span></div><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-brand-500 rounded-full" :style="`width:${s.pct}%`"></div></div></div>
                       </template>
                     </div>
                   </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden h-full flex flex-col">
                   <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"><h2 class="font-bold text-slate-900">Stock non attribué</h2><button @click="go('stock')" class="text-xs text-brand-600 font-semibold hover:underline">Voir tout</button></div>
                   <div class="overflow-x-auto"><table class="w-full text-sm whitespace-nowrap">
                     <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-4 py-2 font-semibold">Cat.</th><th class="px-2 py-2 font-semibold">Marque</th><th class="px-2 py-2 font-semibold">Modèle</th><th class="px-2 py-2 font-semibold">État</th><th class="px-2 py-2 font-semibold text-right">Act.</th></tr></thead>
