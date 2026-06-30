@@ -37,6 +37,9 @@ function suiviApp() {
     deleteTarget: null,
     assignTarget: null,
     assignForm: { Utilisateur: "", Site: "", Etat: "En cours d'utilisation" },
+    bulkOpen: false,
+    bulkSaving: false,
+    bulkRows: [],
     toasts: [],
 
     nav: [
@@ -58,7 +61,7 @@ function suiviApp() {
       this.ready = true;
       this.refreshIcons();
       if (this.cfg.configured && this.authed) this.load();
-      ["modalOpen", "deleteTarget", "assignTarget", "items", "loading", "view", "filterCat", "filterSite", "filterEtat", "filterUser", "search"].forEach((p) => this.$watch(p, () => this.refreshIcons()));
+      ["modalOpen", "deleteTarget", "assignTarget", "bulkOpen", "bulkRows", "items", "loading", "view", "filterCat", "filterSite", "filterEtat", "filterUser", "search"].forEach((p) => this.$watch(p, () => this.refreshIcons()));
     },
 
     refreshIcons() { this.$nextTick(() => window.lucide && lucide.createIcons()); },
@@ -266,6 +269,47 @@ function suiviApp() {
         await this.load();
       } catch (e) { this.toast(e.message, "error"); }
       finally { this.saving = false; }
+    },
+
+    // ---------- ajout multiple ----------
+    emptyBulkRow(prev) {
+      return {
+        Categorie: prev ? prev.Categorie : "",
+        Marque: "", Modele: "", NumeroSerie: "",
+        Quantite: 1,
+        Etat: prev ? prev.Etat : "En cours d'utilisation",
+        Statut: prev ? prev.Statut : "En stock",
+        Utilisateur: "",
+        Site: prev ? prev.Site : "",
+      };
+    },
+    openBulk() { this.bulkRows = [this.emptyBulkRow()]; this.bulkOpen = true; this.refreshIcons(); },
+    addBulkRow() { this.bulkRows.push(this.emptyBulkRow(this.bulkRows[this.bulkRows.length - 1])); this.refreshIcons(); },
+    removeBulkRow(i) { this.bulkRows.splice(i, 1); if (!this.bulkRows.length) this.bulkRows = [this.emptyBulkRow()]; this.refreshIcons(); },
+    bulkValidCount() { return this.bulkRows.filter((r) => (r.Categorie || "").toString().trim() && (r.Marque || "").toString().trim()).length; },
+    async saveBulk() {
+      const rows = this.bulkRows
+        .filter((r) => (r.Categorie || "").toString().trim() && (r.Marque || "").toString().trim())
+        .map((r) => {
+          const o = {};
+          ["Categorie", "Marque", "Modele", "NumeroSerie", "Etat", "Statut", "Utilisateur", "Site"].forEach((k) => {
+            if ((r[k] || "").toString().trim()) o[k] = r[k];
+          });
+          if (r.Quantite !== "" && r.Quantite != null) o.Quantite = parseFloat(r.Quantite);
+          return o;
+        });
+      if (!rows.length) { this.toast("Renseignez au moins Catégorie et Marque sur une ligne", "error"); return; }
+      this.bulkSaving = true;
+      try {
+        const r = await fetch("/api/materiels/bulk", { method: "POST", headers: this.headers(), body: JSON.stringify(rows) });
+        if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || ("Erreur " + r.status)); }
+        const res = await r.json();
+        if (res.errors && res.errors.length) this.toast(`${res.created} ajouté(s), ${res.errors.length} erreur(s)`, res.created ? "ok" : "error");
+        else this.toast(`${res.created} matériel(s) ajouté(s)`);
+        this.bulkOpen = false;
+        await this.load();
+      } catch (e) { this.toast(e.message, "error"); }
+      finally { this.bulkSaving = false; }
     },
 
     askDelete(it) { this.deleteTarget = it; },

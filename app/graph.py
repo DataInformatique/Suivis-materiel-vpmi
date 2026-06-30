@@ -70,15 +70,30 @@ class GraphClient:
         }
 
     def _request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
-        resp = requests.request(method, url, headers=self._headers(), timeout=30, **kwargs)
-        if resp.status_code >= 400:
+        # On ne retente que les lectures (GET) : retenter une écriture pourrait créer des doublons.
+        retriable = method.upper() == "GET"
+        last_exc: Exception | None = None
+        for attempt in range(3):
             try:
-                err = resp.json().get("error", {})
-                msg = err.get("message", resp.text)
-            except Exception:
-                msg = resp.text
-            raise GraphError(f"Graph {resp.status_code} ({method} {url}) : {msg}")
-        return resp
+                resp = requests.request(method, url, headers=self._headers(), timeout=30, **kwargs)
+            except (requests.ConnectionError, requests.Timeout) as exc:
+                last_exc = exc
+                if retriable and attempt < 2:
+                    time.sleep(0.6 * (attempt + 1))
+                    continue
+                raise GraphError(f"Connexion à Graph échouée : {exc}")
+            # Erreurs transitoires (limite de débit / indispo) : on retente les lectures
+            if resp.status_code in (429, 500, 502, 503, 504) and retriable and attempt < 2:
+                time.sleep(0.8 * (attempt + 1))
+                continue
+            if resp.status_code >= 400:
+                try:
+                    msg = resp.json().get("error", {}).get("message", resp.text)
+                except Exception:
+                    msg = resp.text
+                raise GraphError(f"Graph {resp.status_code} ({method} {url}) : {msg}")
+            return resp
+        raise GraphError(f"Graph injoignable après plusieurs tentatives : {last_exc}")
 
     # ---------- Résolution site / liste ----------
     def site_id(self) -> str:

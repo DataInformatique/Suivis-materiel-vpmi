@@ -105,6 +105,23 @@ def create_materiel(payload: dict[str, Any]) -> dict[str, Any]:
     return client.create_item(fields)
 
 
+@app.post("/api/materiels/bulk", dependencies=[Depends(check_auth)])
+def create_materiels_bulk(payload: list[dict[str, Any]]) -> dict[str, Any]:
+    """Crée plusieurs matériels en une fois. Renvoie le nombre créé et les erreurs."""
+    created: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    for i, raw in enumerate(payload):
+        fields = _clean_fields(raw)
+        try:
+            _check_required(fields)
+            created.append(client.create_item(fields))
+        except HTTPException as exc:
+            errors.append({"ligne": i + 1, "detail": exc.detail})
+        except GraphError as exc:
+            errors.append({"ligne": i + 1, "detail": str(exc)})
+    return {"created": len(created), "errors": errors}
+
+
 @app.put("/api/materiels/{item_id}", dependencies=[Depends(check_auth)])
 def update_materiel(item_id: str, payload: dict[str, Any]) -> dict[str, Any]:
     fields = _clean_fields(payload)
