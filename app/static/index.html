@@ -54,7 +54,7 @@
   <div class="flex min-h-screen">
 
     <!-- ===== Barre latérale ===== -->
-    <aside class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-brand-950 to-brand-900 text-white flex flex-col transition-transform" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+    <aside class="fixed lg:static inset-y-0 left-0 z-40 w-52 bg-gradient-to-b from-brand-950 to-brand-900 text-white flex flex-col transition-transform" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
       <div class="px-6 h-16 flex items-center"><span class="text-2xl font-extrabold tracking-tight">VPMI</span></div>
       <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <template x-for="item in nav" :key="item.id">
@@ -123,101 +123,97 @@
             </template>
           </div>
 
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <!-- Colonne principale -->
-            <div class="xl:col-span-2 space-y-6">
-              <!-- Inventaire attribué -->
-              <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden">
-                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100"><h2 class="font-bold text-slate-900">Matériel attribué</h2><button @click="go('attribue')" class="text-sm text-brand-600 font-semibold hover:underline">Voir tout</button></div>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-sm whitespace-nowrap">
-                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold">Catégorie</th><th class="px-3 py-2.5 font-semibold">Marque</th><th class="px-3 py-2.5 font-semibold">Modèle</th><th class="px-3 py-2.5 font-semibold">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right">Actions</th></tr></thead>
-                    <tbody>
-                      <template x-for="it in attribues().slice(0,7)" :key="it.id">
-                        <tr class="border-t border-slate-50 hover:bg-slate-50/70">
-                          <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-slate-700" x-text="it.Categorie"></span></div></td>
-                          <td class="px-3 py-3 font-medium text-slate-800" x-text="it.Marque || '—'"></td>
-                          <td class="px-3 py-3 text-slate-600" x-text="it.Modele || '—'"></td>
-                          <td class="px-3 py-3"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)"><span class="w-1.5 h-1.5 rounded-full" :class="etatDot(it.Etat)"></span><span x-text="it.Etat || '—'"></span></span></td>
-                          <td class="px-3 py-3 text-slate-600" x-text="it.Utilisateur || '—'"></td>
-                          <td class="px-3 py-3"><div class="flex items-center justify-end gap-1"><button @click="openEdit(it)" class="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-4 h-4"></i></button><button @click="askDelete(it)" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
-                        </tr>
-                      </template>
-                      <tr x-show="attribues().length===0"><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
-                    </tbody>
-                  </table>
+          <!-- Rangée 1 : Matériel attribué (large) + Alertes -->
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+            <div class="xl:col-span-2 bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden flex flex-col">
+              <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100"><h2 class="font-bold text-slate-900">Matériel attribué</h2><button @click="go('attribue')" class="text-sm text-brand-600 font-semibold hover:underline">Voir tout</button></div>
+              <table class="w-full text-sm table-fixed">
+                <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold w-[18%]">Catégorie</th><th class="px-3 py-2.5 font-semibold w-[16%]">Marque</th><th class="px-3 py-2.5 font-semibold w-[20%]">Modèle</th><th class="px-3 py-2.5 font-semibold w-[18%]">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right w-[80px]">Actions</th></tr></thead>
+                <tbody>
+                  <template x-for="it in attribues().slice(0,7)" :key="it.id">
+                    <tr class="border-t border-slate-50 hover:bg-slate-50/70 align-top">
+                      <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-slate-700 truncate" x-text="it.Categorie"></span></div></td>
+                      <td class="px-3 py-3 font-medium text-slate-800 break-words" x-text="it.Marque || '—'"></td>
+                      <td class="px-3 py-3 text-slate-600 break-words" x-text="it.Modele || '—'"></td>
+                      <td class="px-3 py-3"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)"><span class="w-1.5 h-1.5 rounded-full" :class="etatDot(it.Etat)"></span><span x-text="it.Etat || '—'"></span></span></td>
+                      <td class="px-3 py-3 text-slate-600 break-words" x-text="it.Utilisateur || '—'"></td>
+                      <td class="px-3 py-3"><div class="flex items-center justify-end gap-1"><button @click="openEdit(it)" class="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-4 h-4"></i></button><button @click="askDelete(it)" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
+                    </tr>
+                  </template>
+                  <tr x-show="attribues().length===0"><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Alertes -->
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5 h-full flex flex-col">
+              <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-900 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-amber-500"></i>Alertes</h2><span class="text-xs bg-amber-100 text-amber-700 font-semibold rounded-full px-2 py-0.5" x-text="alerts().length"></span></div>
+              <div x-show="alerts().length===0" class="text-sm text-slate-400 py-6 text-center flex-1 flex flex-col items-center justify-center"><i data-lucide="check-circle-2" class="w-7 h-7 mx-auto text-emerald-400"></i><p class="mt-2">Aucune alerte 🎉</p></div>
+              <div class="space-y-1 flex-1 overflow-y-auto">
+                <template x-for="it in alerts()" :key="it.id">
+                  <button @click="openEdit(it)" class="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="etatClass(it.Etat)"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4"></i></span>
+                    <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="(it.Marque||'')+' '+(it.Modele||'')"></div><div class="text-xs text-slate-400 truncate" x-text="(it.Etat||'')+(it.Utilisateur ? ' · '+it.Utilisateur : '')"></div></div>
+                  </button>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rangée 2 : Répartition · Stock · Dernières attributions (même hauteur) -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <!-- Répartition -->
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5 h-full flex flex-col">
+              <h2 class="font-bold text-slate-900 mb-4">Répartition par catégorie</h2>
+              <div class="flex items-center gap-4">
+                <div class="relative w-28 h-28 shrink-0 rounded-full" :style="donutStyle()"><div class="absolute inset-[26%] bg-white rounded-full flex flex-col items-center justify-center"><span class="text-xl font-extrabold text-slate-900" x-text="donutTotal()"></span><span class="text-[10px] text-slate-400">équip.</span></div></div>
+                <div class="flex-1 min-w-0 space-y-1.5">
+                  <template x-for="c in categoryDist()" :key="c.label">
+                    <div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background:${c.color}`"></span><span class="text-slate-600 truncate" x-text="c.label"></span><span class="ml-auto font-semibold text-slate-800" x-text="c.pct+'%'"></span><span class="text-slate-400 w-7 text-right" x-text="'('+c.count+')'"></span></div>
+                  </template>
                 </div>
               </div>
-
-              <!-- Donut + Stock -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5 h-full flex flex-col">
-                  <h2 class="font-bold text-slate-900 mb-4">Répartition par catégorie</h2>
-                  <div class="flex items-center gap-5">
-                    <div class="relative w-32 h-32 shrink-0 rounded-full" :style="donutStyle()"><div class="absolute inset-[26%] bg-white rounded-full flex flex-col items-center justify-center"><span class="text-2xl font-extrabold text-slate-900" x-text="donutTotal()"></span><span class="text-[10px] text-slate-400">équip.</span></div></div>
-                    <div class="flex-1 space-y-1.5">
-                      <template x-for="c in categoryDist()" :key="c.label">
-                        <div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full shrink-0" :style="`background:${c.color}`"></span><span class="text-slate-600 truncate" x-text="c.label"></span><span class="ml-auto font-semibold text-slate-800" x-text="c.pct+'%'"></span><span class="text-slate-400 w-7 text-right" x-text="'('+c.count+')'"></span></div>
-                      </template>
-                    </div>
-                  </div>
-                  <div class="mt-5 pt-4 border-t border-slate-100 flex-1">
-                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Répartition par pays</h3>
-                    <div class="space-y-2.5">
-                      <template x-for="s in siteDist()" :key="s.label">
-                        <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-600" x-text="s.label"></span><span class="font-semibold text-slate-700"><span x-text="s.count"></span> · <span x-text="s.pct+'%'"></span></span></div><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-brand-500 rounded-full" :style="`width:${s.pct}%`"></div></div></div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden h-full flex flex-col">
-                  <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"><h2 class="font-bold text-slate-900">Stock non attribué</h2><button @click="go('stock')" class="text-xs text-brand-600 font-semibold hover:underline">Voir tout</button></div>
-                  <div class="overflow-x-auto"><table class="w-full text-sm whitespace-nowrap">
-                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-4 py-2 font-semibold">Cat.</th><th class="px-2 py-2 font-semibold">Marque</th><th class="px-2 py-2 font-semibold">Modèle</th><th class="px-2 py-2 font-semibold">État</th><th class="px-2 py-2 font-semibold text-right">Act.</th></tr></thead>
-                    <tbody>
-                      <template x-for="it in stockItems().slice(0,6)" :key="it.id">
-                        <tr class="border-t border-slate-50 hover:bg-slate-50/70">
-                          <td class="px-4 py-2.5"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i></td>
-                          <td class="px-2 py-2.5 font-medium text-slate-800" x-text="it.Marque || '—'"></td>
-                          <td class="px-2 py-2.5 text-slate-600" x-text="it.Modele || '—'"></td>
-                          <td class="px-2 py-2.5"><span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)" x-text="it.Etat || '—'"></span></td>
-                          <td class="px-2 py-2.5"><div class="flex items-center justify-end gap-1"><button @click="openAssign(it)" title="Attribuer" class="p-1 rounded hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i></button><button @click="openEdit(it)" class="p-1 rounded hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button @click="askDelete(it)" class="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></td>
-                        </tr>
-                      </template>
-                      <tr x-show="stockItems().length===0"><td colspan="5" class="px-4 py-6 text-center text-slate-400 text-sm">Stock vide.</td></tr>
-                    </tbody>
-                  </table></div>
+              <div class="mt-5 pt-4 border-t border-slate-100 flex-1">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Répartition par pays</h3>
+                <div class="space-y-2.5">
+                  <template x-for="s in siteDist()" :key="s.label">
+                    <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-600 truncate" x-text="s.label"></span><span class="font-semibold text-slate-700 shrink-0"><span x-text="s.count"></span> · <span x-text="s.pct+'%'"></span></span></div><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-brand-500 rounded-full" :style="`width:${s.pct}%`"></div></div></div>
+                  </template>
                 </div>
               </div>
             </div>
 
-            <!-- Colonne droite -->
-            <div class="space-y-6">
-              <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
-                <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-900 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-amber-500"></i>Alertes matériel</h2><span class="text-xs bg-amber-100 text-amber-700 font-semibold rounded-full px-2 py-0.5" x-text="alerts().length"></span></div>
-                <div x-show="alerts().length===0" class="text-sm text-slate-400 py-6 text-center"><i data-lucide="check-circle-2" class="w-7 h-7 mx-auto text-emerald-400"></i><p class="mt-2">Aucune alerte 🎉</p></div>
-                <div class="space-y-1 max-h-80 overflow-y-auto">
-                  <template x-for="it in alerts()" :key="it.id">
-                    <button @click="openEdit(it)" class="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                      <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="etatClass(it.Etat)"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4"></i></span>
-                      <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="(it.Marque||'')+' '+(it.Modele||'')"></div><div class="text-xs text-slate-400 truncate" x-text="(it.Etat||'')+(it.Utilisateur ? ' · '+it.Utilisateur : '')+(it.Remarque ? ' · '+it.Remarque : '')"></div></div>
-                    </button>
+            <!-- Stock -->
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden h-full flex flex-col">
+              <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"><h2 class="font-bold text-slate-900">Stock non attribué</h2><button @click="go('stock')" class="text-xs text-brand-600 font-semibold hover:underline">Voir tout</button></div>
+              <table class="w-full text-sm table-fixed">
+                <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-4 py-2 font-semibold w-8"></th><th class="px-2 py-2 font-semibold w-[30%]">Marque</th><th class="px-2 py-2 font-semibold">Modèle</th><th class="px-2 py-2 font-semibold text-right w-16">Act.</th></tr></thead>
+                <tbody>
+                  <template x-for="it in stockItems().slice(0,7)" :key="it.id">
+                    <tr class="border-t border-slate-50 hover:bg-slate-50/70 align-top">
+                      <td class="px-4 py-2.5"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i></td>
+                      <td class="px-2 py-2.5 font-medium text-slate-800 break-words" x-text="it.Marque || '—'"></td>
+                      <td class="px-2 py-2.5 text-slate-600 break-words" x-text="it.Modele || '—'"></td>
+                      <td class="px-2 py-2.5"><div class="flex items-center justify-end gap-0.5"><button @click="openAssign(it)" title="Attribuer" class="p-1 rounded hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i></button><button @click="askDelete(it)" class="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></td>
+                    </tr>
                   </template>
-                </div>
-              </div>
+                  <tr x-show="stockItems().length===0"><td colspan="4" class="px-4 py-6 text-center text-slate-400 text-sm">Stock vide.</td></tr>
+                </tbody>
+              </table>
+            </div>
 
-              <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
-                <h2 class="font-bold text-slate-900 mb-3">Dernières attributions</h2>
-                <div class="space-y-3">
-                  <template x-for="it in recentAttributions()" :key="it.id">
-                    <div class="flex items-center gap-3">
-                      <span class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs shrink-0" :class="avatarColor(it.Utilisateur)" x-text="initials(it.Utilisateur)"></span>
-                      <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="it.Utilisateur || '—'"></div><div class="text-xs text-slate-400 truncate" x-text="it.Categorie + (it.Modele ? ' · '+it.Modele : '')"></div></div>
-                      <div class="text-[11px] text-slate-400 text-right shrink-0" x-text="fmtDate(it._created)"></div>
-                    </div>
-                  </template>
-                  <p x-show="recentAttributions().length===0" class="text-sm text-slate-400 text-center py-4">Aucune attribution.</p>
-                </div>
+            <!-- Dernières attributions -->
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5 h-full flex flex-col">
+              <h2 class="font-bold text-slate-900 mb-3">Dernières attributions</h2>
+              <div class="space-y-3 flex-1 overflow-y-auto">
+                <template x-for="it in recentAttributions()" :key="it.id">
+                  <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs shrink-0" :class="avatarColor(it.Utilisateur)" x-text="initials(it.Utilisateur)"></span>
+                    <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="it.Utilisateur || '—'"></div><div class="text-xs text-slate-400 truncate" x-text="it.Categorie + (it.Modele ? ' · '+it.Modele : '')"></div></div>
+                    <div class="text-[11px] text-slate-400 text-right shrink-0" x-text="fmtDate(it._created)"></div>
+                  </div>
+                </template>
+                <p x-show="recentAttributions().length===0" class="text-sm text-slate-400 text-center py-4">Aucune attribution.</p>
               </div>
             </div>
           </div>
