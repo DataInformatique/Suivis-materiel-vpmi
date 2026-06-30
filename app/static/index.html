@@ -130,7 +130,7 @@
               <table class="w-full text-sm table-fixed">
                 <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold w-[18%]">Catégorie</th><th class="px-3 py-2.5 font-semibold w-[16%]">Marque</th><th class="px-3 py-2.5 font-semibold w-[20%]">Modèle</th><th class="px-3 py-2.5 font-semibold w-[18%]">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right w-[80px]">Actions</th></tr></thead>
                 <tbody>
-                  <template x-for="it in attribues().slice(0,7)" :key="it.id">
+                  <template x-for="it in attrPaged()" :key="it.id">
                     <tr class="border-t border-slate-50 hover:bg-slate-50/70 align-top">
                       <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400 shrink-0"></i><span class="text-slate-700 truncate" x-text="it.Categorie"></span></div></td>
                       <td class="px-3 py-3 font-medium text-slate-800 break-words" x-text="it.Marque || '—'"></td>
@@ -143,6 +143,14 @@
                   <tr x-show="attribues().length===0"><td colspan="6" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
                 </tbody>
               </table>
+              <div class="mt-auto flex items-center justify-between px-5 py-2.5 border-t border-slate-100 text-xs">
+                <span class="text-slate-400" x-text="attribues().length + ' attribué(s)'"></span>
+                <div class="flex items-center gap-1" x-show="attrPages()>1">
+                  <button @click="attrPage=Math.max(1,attrPage-1)" :disabled="attrPage<=1" class="p-1 rounded border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                  <span class="px-1.5 text-slate-500 font-medium" x-text="Math.min(attrPage,attrPages())+'/'+attrPages()"></span>
+                  <button @click="attrPage=Math.min(attrPages(),attrPage+1)" :disabled="attrPage>=attrPages()" class="p-1 rounded border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                </div>
+              </div>
             </div>
 
             <!-- Alertes -->
@@ -189,7 +197,7 @@
               <table class="w-full text-sm table-fixed">
                 <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-4 py-2 font-semibold w-8"></th><th class="px-2 py-2 font-semibold w-[30%]">Marque</th><th class="px-2 py-2 font-semibold">Modèle</th><th class="px-2 py-2 font-semibold text-right w-16">Act.</th></tr></thead>
                 <tbody>
-                  <template x-for="it in stockItems().slice(0,7)" :key="it.id">
+                  <template x-for="it in stockPaged()" :key="it.id">
                     <tr class="border-t border-slate-50 hover:bg-slate-50/70 align-top">
                       <td class="px-4 py-2.5"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i></td>
                       <td class="px-2 py-2.5 font-medium text-slate-800 break-words" x-text="it.Marque || '—'"></td>
@@ -200,6 +208,14 @@
                   <tr x-show="stockItems().length===0"><td colspan="4" class="px-4 py-6 text-center text-slate-400 text-sm">Stock vide.</td></tr>
                 </tbody>
               </table>
+              <div class="mt-auto flex items-center justify-between px-4 py-2.5 border-t border-slate-100 text-xs">
+                <span class="text-slate-400" x-text="stockItems().length + ' en stock'"></span>
+                <div class="flex items-center gap-1" x-show="stockPages()>1">
+                  <button @click="stockPage=Math.max(1,stockPage-1)" :disabled="stockPage<=1" class="p-1 rounded border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+                  <span class="px-1.5 text-slate-500 font-medium" x-text="Math.min(stockPage,stockPages())+'/'+stockPages()"></span>
+                  <button @click="stockPage=Math.min(stockPages(),stockPage+1)" :disabled="stockPage>=stockPages()" class="p-1 rounded border border-slate-200 text-slate-500 disabled:opacity-40 hover:bg-slate-50"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+                </div>
+              </div>
             </div>
 
             <!-- Dernières attributions -->

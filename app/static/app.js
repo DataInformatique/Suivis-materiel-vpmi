@@ -43,6 +43,10 @@ function suiviApp() {
     // pagination (vue Parc)
     page: 1,
     perPage: 12,
+    // pagination des cartes du tableau de bord (5 lignes)
+    dashPer: 5,
+    attrPage: 1,
+    stockPage: 1,
     // import de fichier
     importOpen: false,
     importFile: null,
@@ -72,7 +76,7 @@ function suiviApp() {
       if (this.cfg.configured && this.authed) this.load();
       ["modalOpen", "deleteTarget", "assignTarget", "bulkOpen", "bulkRows", "importOpen", "items", "loading", "view", "filterCat", "filterSite", "filterEtat", "filterUser", "search"].forEach((p) => this.$watch(p, () => this.refreshIcons()));
       // revenir à la page 1 quand les filtres/la recherche changent
-      ["filterCat", "filterStatut", "filterSite", "filterEtat", "filterUser", "search", "view"].forEach((p) => this.$watch(p, () => { this.page = 1; }));
+      ["filterCat", "filterStatut", "filterSite", "filterEtat", "filterUser", "search", "view"].forEach((p) => this.$watch(p, () => { this.page = 1; this.attrPage = 1; this.stockPage = 1; }));
     },
 
     refreshIcons() { this.$nextTick(() => window.lucide && lucide.createIcons()); },
@@ -143,6 +147,11 @@ function suiviApp() {
     },
     attribues() { return this.base().filter((i) => i.Statut === "Attribué"); },
     stockItems() { return this.base().filter((i) => i.Statut === "En stock"); },
+    // pages des cartes du tableau de bord (5 lignes)
+    attrPages() { return Math.max(1, Math.ceil(this.attribues().length / this.dashPer)); },
+    attrPaged() { const p = Math.min(this.attrPage, this.attrPages()); return this.attribues().slice((p - 1) * this.dashPer, p * this.dashPer); },
+    stockPages() { return Math.max(1, Math.ceil(this.stockItems().length / this.dashPer)); },
+    stockPaged() { const p = Math.min(this.stockPage, this.stockPages()); return this.stockItems().slice((p - 1) * this.dashPer, p * this.dashPer); },
     // vue Parc : base + filtre statut (présélection menu)
     filtered() { return this.base().filter((i) => !this.filterStatut || i.Statut === this.filterStatut); },
 
