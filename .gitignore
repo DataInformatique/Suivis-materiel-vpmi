@@ -1,0 +1,26 @@
+# Secrets — NE JAMAIS committer
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+desktop.ini
+
+# Fichiers temporaires d'import
+*.tmp
+
+# Données réelles / personnelles (restent dans SharePoint, pas sur GitHub)
+samples/
+
+# Outils / divers
+.claude/

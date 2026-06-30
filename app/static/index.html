@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi Matériel · VPMI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: { brand: {50:'#eef4ff',100:'#d9e6ff',200:'#bcd3ff',300:'#8eb5ff',400:'#598dff',500:'#3366ff',600:'#1f47f5',700:'#1736e1',800:'#192fb6',900:'#1b2f8f',950:'#0b1437'} },
+      fontFamily: { sans: ['Inter','system-ui','Segoe UI','sans-serif'] },
+      boxShadow: { card: '0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04)' }
+    } } }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak]{display:none!important}
+    body{font-family:'Inter',system-ui,sans-serif}
+    ::-webkit-scrollbar{width:9px;height:9px}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+    .nav-link{transition:all .15s}
+  </style>
+</head>
+<body class="h-full bg-slate-100 text-slate-800 antialiased">
+<div x-data="suiviApp()" x-init="init()" x-cloak class="min-h-full">
+
+  <!-- ====== Config manquante ====== -->
+  <template x-if="ready && !cfg.configured">
+    <div class="min-h-screen flex items-center justify-center p-6"><div class="max-w-lg w-full bg-white rounded-2xl shadow-card p-8 border border-slate-100">
+      <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4"><i data-lucide="settings" class="text-amber-600"></i></div>
+      <h1 class="text-xl font-bold text-slate-900">Configuration requise</h1>
+      <p class="text-slate-500 mt-2 text-sm">Renseignez ces valeurs dans le fichier <code class="px-1 py-0.5 bg-slate-100 rounded text-brand-700">.env</code> :</p>
+      <ul class="mt-4 space-y-1.5"><template x-for="m in cfg.missing" :key="m"><li class="flex items-center gap-2 text-sm"><i data-lucide="x-circle" class="w-4 h-4 text-red-500"></i><span x-text="m" class="font-mono text-slate-700"></span></li></template></ul>
+    </div></div>
+  </template>
+
+  <!-- ====== Mot de passe ====== -->
+  <template x-if="ready && cfg.configured && cfg.password_required && !authed">
+    <div class="min-h-screen flex items-center justify-center p-6"><form @submit.prevent="login()" class="max-w-sm w-full bg-white rounded-2xl shadow-card p-8 border border-slate-100">
+      <div class="flex items-center gap-3 mb-6"><div class="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white font-extrabold">V</div><div><div class="font-bold text-slate-900 leading-tight">Suivi Matériel</div><div class="text-xs text-slate-400">VPMI</div></div></div>
+      <label class="block text-sm font-medium text-slate-700 mb-1.5">Mot de passe</label>
+      <input type="password" x-model="passwordInput" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="••••••••" autofocus />
+      <p x-show="loginError" x-text="loginError" class="text-red-500 text-sm mt-2"></p>
+      <button class="mt-4 w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg py-2.5">Se connecter</button>
+    </form></div>
+  </template>
+
+  <!-- ====== APPLICATION ====== -->
+  <template x-if="ready && cfg.configured && authed">
+  <div class="flex min-h-screen">
+
+    <!-- ===== Barre latérale ===== -->
+    <aside class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-brand-950 to-brand-900 text-white flex flex-col transition-transform" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+      <div class="px-6 h-16 flex items-center"><span class="text-2xl font-extrabold tracking-tight">VPMI</span></div>
+      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <template x-for="item in nav" :key="item.id">
+          <button @click="go(item.id)" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium" :class="activeNav===item.id ? 'bg-brand-600 text-white shadow' : 'text-white/70 hover:bg-white/10 hover:text-white'">
+            <i :data-lucide="item.icon" class="w-[18px] h-[18px]"></i><span x-text="item.label"></span>
+          </button>
+        </template>
+      </nav>
+      <div class="p-3"><div class="rounded-xl bg-white/5 border border-white/10 p-3"><div class="flex items-center gap-2 text-sm font-medium"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Connecté</div><div class="text-[11px] text-white/50 mt-1" x-text="cfg.list_name"></div></div></div>
+      <div class="px-4 pb-4 text-[11px] text-white/30">© VPMI 2026</div>
+    </aside>
+    <div x-show="sidebarOpen" @click="sidebarOpen=false" class="fixed inset-0 bg-black/30 z-30 lg:hidden"></div>
+
+    <!-- ===== Zone principale ===== -->
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
+        <div class="px-4 sm:px-6 h-16 flex items-center gap-3">
+          <button @click="sidebarOpen=!sidebarOpen" class="lg:hidden p-2 rounded-lg hover:bg-slate-100"><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <h1 class="font-bold text-slate-900 text-lg hidden md:block" x-text="'Suivi du matériel informatique'"></h1>
+          <div class="relative flex-1 max-w-lg mx-auto">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input x-model="search" @focus="if(view==='dashboard') go('inventaire')" type="text" placeholder="Rechercher un équipement, un utilisateur, une référence…" class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none text-sm" />
+          </div>
+          <div class="flex items-center gap-2 pl-2 border-l border-slate-100">
+            <div class="w-9 h-9 rounded-full bg-brand-600 text-white flex items-center justify-center font-semibold text-sm">IT</div>
+            <div class="hidden sm:block leading-tight"><div class="text-sm font-semibold text-slate-800">Informatique</div><div class="text-xs text-slate-400">VPMI</div></div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 p-4 sm:p-6">
+        <div x-show="loading" class="p-12 text-center text-slate-400"><i data-lucide="loader-circle" class="w-8 h-8 mx-auto animate-spin"></i><p class="mt-3 text-sm">Chargement depuis SharePoint…</p></div>
+        <div x-show="!loading && error" class="bg-white rounded-xl border border-slate-100 p-8 text-center"><i data-lucide="cloud-off" class="w-8 h-8 mx-auto text-red-400"></i><p class="mt-3 text-sm text-red-600 font-medium">Erreur de connexion</p><p class="text-xs text-slate-500 mt-1 max-w-md mx-auto" x-text="error"></p><button @click="load()" class="mt-4 text-sm text-brand-600 font-semibold hover:underline">Réessayer</button></div>
+
+        <!-- Barre de filtres (partagée dashboard / parc) -->
+        <template x-if="!loading && !error && (view==='dashboard' || view==='parc')">
+          <div class="bg-white rounded-xl shadow-card border border-slate-100 p-3 mb-6 flex flex-col sm:flex-row gap-3 flex-wrap items-stretch sm:items-center">
+            <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-400 hidden sm:inline">Type</span>
+              <select x-model="filterCat" class="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"><option value="">Tous</option><template x-for="c in choicesFor('Categorie')" :key="c"><option x-text="c" :value="c"></option></template></select></div>
+            <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-400 hidden sm:inline">Pays</span>
+              <select x-model="filterSite" class="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"><option value="">Tous</option><template x-for="c in choicesFor('Site')" :key="c"><option x-text="c" :value="c"></option></template></select></div>
+            <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-400 hidden sm:inline">État</span>
+              <select x-model="filterEtat" class="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500"><option value="">Tous</option><template x-for="c in choicesFor('Etat')" :key="c"><option x-text="c" :value="c"></option></template></select></div>
+            <div class="flex items-center gap-2"><span class="text-xs font-medium text-slate-400 hidden sm:inline">Utilisateur</span>
+              <select x-model="filterUser" class="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 max-w-[160px]"><option value="">Tous</option><template x-for="u in userList()" :key="u"><option x-text="u" :value="u"></option></template></select></div>
+            <button @click="resetFilters()" class="sm:ml-auto inline-flex items-center gap-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-medium rounded-lg px-3 py-2"><i data-lucide="rotate-ccw" class="w-4 h-4"></i>Réinitialiser</button>
+            <button @click="openCreate()" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg px-4 py-2 shadow-sm"><i data-lucide="plus" class="w-4 h-4"></i>Ajouter</button>
+          </div>
+        </template>
+
+        <!-- ========================= TABLEAU DE BORD ========================= -->
+        <div x-show="!loading && !error && view==='dashboard'" class="space-y-6">
+          <!-- KPIs -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+            <template x-for="k in kpis()" :key="k.label">
+              <div class="bg-white rounded-xl shadow-card border border-slate-100 p-3.5 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <span class="text-[11px] text-slate-500 font-medium leading-tight" x-text="k.label"></span>
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="k.bg"><i :data-lucide="k.icon" class="w-4 h-4" :class="k.fg"></i></div>
+                </div>
+                <div class="text-2xl font-extrabold text-slate-900 mt-1.5 leading-none" x-text="k.value"></div>
+                <div class="text-[10px] text-slate-400 mt-1 truncate" x-text="k.sub" :title="k.sub"></div>
+              </div>
+            </template>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Colonne principale -->
+            <div class="xl:col-span-2 space-y-6">
+              <!-- Inventaire attribué -->
+              <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100"><h2 class="font-bold text-slate-900">Matériel attribué</h2><button @click="go('attribue')" class="text-sm text-brand-600 font-semibold hover:underline">Voir tout</button></div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm whitespace-nowrap">
+                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-5 py-2.5 font-semibold">Catégorie</th><th class="px-3 py-2.5 font-semibold">Pays</th><th class="px-3 py-2.5 font-semibold">Marque</th><th class="px-3 py-2.5 font-semibold">Modèle</th><th class="px-3 py-2.5 font-semibold">Qté</th><th class="px-3 py-2.5 font-semibold">État</th><th class="px-3 py-2.5 font-semibold">Utilisateur</th><th class="px-3 py-2.5 font-semibold text-right">Actions</th></tr></thead>
+                    <tbody>
+                      <template x-for="it in attribues().slice(0,7)" :key="it.id">
+                        <tr class="border-t border-slate-50 hover:bg-slate-50/70">
+                          <td class="px-5 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i><span class="text-slate-700" x-text="it.Categorie"></span></div></td>
+                          <td class="px-3 py-3 text-slate-600" x-text="it.Site || '—'"></td>
+                          <td class="px-3 py-3 font-medium text-slate-800" x-text="it.Marque || '—'"></td>
+                          <td class="px-3 py-3 text-slate-600" x-text="it.Modele || '—'"></td>
+                          <td class="px-3 py-3 text-slate-600" x-text="it.Quantite ?? '—'"></td>
+                          <td class="px-3 py-3"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)"><span class="w-1.5 h-1.5 rounded-full" :class="etatDot(it.Etat)"></span><span x-text="it.Etat || '—'"></span></span></td>
+                          <td class="px-3 py-3 text-slate-600" x-text="it.Utilisateur || '—'"></td>
+                          <td class="px-3 py-3"><div class="flex items-center justify-end gap-1"><button @click="openEdit(it)" class="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-4 h-4"></i></button><button @click="askDelete(it)" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
+                        </tr>
+                      </template>
+                      <tr x-show="attribues().length===0"><td colspan="8" class="px-5 py-8 text-center text-slate-400 text-sm">Aucun matériel attribué.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Donut + Stock -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
+                  <h2 class="font-bold text-slate-900 mb-4">Répartition par catégorie</h2>
+                  <div class="flex items-center gap-5">
+                    <div class="relative w-32 h-32 shrink-0 rounded-full" :style="donutStyle()"><div class="absolute inset-[20%] bg-white rounded-full flex flex-col items-center justify-center"><span class="text-xl font-extrabold text-slate-900" x-text="donutTotal()"></span><span class="text-[10px] text-slate-400">équip.</span></div></div>
+                    <div class="flex-1 space-y-1.5">
+                      <template x-for="c in categoryDist()" :key="c.label">
+                        <div class="flex items-center gap-2 text-xs"><span class="w-2.5 h-2.5 rounded-full" :style="`background:${c.color}`"></span><span class="text-slate-600" x-text="c.label"></span><span class="ml-auto font-semibold text-slate-800" x-text="c.pct+'%'"></span><span class="text-slate-400 w-7 text-right" x-text="'('+c.count+')'"></span></div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden">
+                  <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"><h2 class="font-bold text-slate-900">Stock non attribué</h2><button @click="go('stock')" class="text-xs text-brand-600 font-semibold hover:underline">Voir tout</button></div>
+                  <div class="overflow-x-auto"><table class="w-full text-sm whitespace-nowrap">
+                    <thead><tr class="text-left text-slate-400 bg-slate-50/60"><th class="px-4 py-2 font-semibold">Cat.</th><th class="px-2 py-2 font-semibold">Marque</th><th class="px-2 py-2 font-semibold">Modèle</th><th class="px-2 py-2 font-semibold">État</th><th class="px-2 py-2 font-semibold text-right">Act.</th></tr></thead>
+                    <tbody>
+                      <template x-for="it in stockItems().slice(0,6)" :key="it.id">
+                        <tr class="border-t border-slate-50 hover:bg-slate-50/70">
+                          <td class="px-4 py-2.5"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i></td>
+                          <td class="px-2 py-2.5 font-medium text-slate-800" x-text="it.Marque || '—'"></td>
+                          <td class="px-2 py-2.5 text-slate-600" x-text="it.Modele || '—'"></td>
+                          <td class="px-2 py-2.5"><span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)" x-text="it.Etat || '—'"></span></td>
+                          <td class="px-2 py-2.5"><div class="flex items-center justify-end gap-1"><button @click="openAssign(it)" title="Attribuer" class="p-1 rounded hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i></button><button @click="openEdit(it)" class="p-1 rounded hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button><button @click="askDelete(it)" class="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></td>
+                        </tr>
+                      </template>
+                      <tr x-show="stockItems().length===0"><td colspan="5" class="px-4 py-6 text-center text-slate-400 text-sm">Stock vide.</td></tr>
+                    </tbody>
+                  </table></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="space-y-6">
+              <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
+                <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-900 flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-amber-500"></i>Alertes matériel</h2><span class="text-xs bg-amber-100 text-amber-700 font-semibold rounded-full px-2 py-0.5" x-text="alerts().length"></span></div>
+                <div x-show="alerts().length===0" class="text-sm text-slate-400 py-6 text-center"><i data-lucide="check-circle-2" class="w-7 h-7 mx-auto text-emerald-400"></i><p class="mt-2">Aucune alerte 🎉</p></div>
+                <div class="space-y-1 max-h-80 overflow-y-auto">
+                  <template x-for="it in alerts()" :key="it.id">
+                    <button @click="openEdit(it)" class="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+                      <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" :class="etatClass(it.Etat)"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4"></i></span>
+                      <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="(it.Marque||'')+' '+(it.Modele||'')"></div><div class="text-xs text-slate-400 truncate" x-text="(it.Etat||'')+(it.Utilisateur ? ' · '+it.Utilisateur : '')+(it.Remarque ? ' · '+it.Remarque : '')"></div></div>
+                    </button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5">
+                <h2 class="font-bold text-slate-900 mb-3">Dernières attributions</h2>
+                <div class="space-y-3">
+                  <template x-for="it in recentAttributions()" :key="it.id">
+                    <div class="flex items-center gap-3">
+                      <span class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs shrink-0" :class="avatarColor(it.Utilisateur)" x-text="initials(it.Utilisateur)"></span>
+                      <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="it.Utilisateur || '—'"></div><div class="text-xs text-slate-400 truncate" x-text="it.Categorie + (it.Modele ? ' · '+it.Modele : '')"></div></div>
+                      <div class="text-[11px] text-slate-400 text-right shrink-0" x-text="fmtDate(it._created)"></div>
+                    </div>
+                  </template>
+                  <p x-show="recentAttributions().length===0" class="text-sm text-slate-400 text-center py-4">Aucune attribution.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================= PARC / INVENTAIRE ========================= -->
+        <div x-show="!loading && !error && view==='parc'" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-slate-900 text-lg" x-text="filterStatut==='Attribué' ? 'Matériel attribué' : (filterStatut==='En stock' ? 'Stock non attribué' : (problemOnly ? 'Maintenance — à surveiller' : 'Inventaire complet'))"></h2>
+            <button @click="exportCsv()" class="inline-flex items-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-sm font-medium rounded-lg px-3 py-2"><i data-lucide="download" class="w-4 h-4"></i>Export CSV</button>
+          </div>
+          <div class="bg-white rounded-xl shadow-card border border-slate-100 overflow-hidden">
+            <div x-show="filtered().length===0" class="p-12 text-center text-slate-400"><i data-lucide="package-open" class="w-10 h-10 mx-auto"></i><p class="mt-3 text-sm">Aucun résultat.</p></div>
+            <div x-show="filtered().length>0" class="overflow-x-auto"><table class="w-full text-sm whitespace-nowrap">
+              <thead><tr class="text-left text-slate-500 border-b border-slate-100 bg-slate-50/60"><th class="px-4 py-3 font-semibold">Catégorie</th><th class="px-4 py-3 font-semibold">Pays</th><th class="px-4 py-3 font-semibold">Marque</th><th class="px-4 py-3 font-semibold">Modèle</th><th class="px-4 py-3 font-semibold">Qté</th><th class="px-4 py-3 font-semibold">État</th><th class="px-4 py-3 font-semibold">Accessoires</th><th class="px-4 py-3 font-semibold">Utilisateur</th><th class="px-4 py-3 font-semibold">Statut</th><th class="px-4 py-3 font-semibold text-right">Actions</th></tr></thead>
+              <tbody>
+                <template x-for="it in filtered()" :key="it.id">
+                  <tr class="border-b border-slate-50 hover:bg-slate-50/70">
+                    <td class="px-4 py-3"><div class="flex items-center gap-2"><i :data-lucide="catIcon(it.Categorie)" class="w-4 h-4 text-slate-400"></i><span class="text-slate-700" x-text="it.Categorie"></span></div></td>
+                    <td class="px-4 py-3 text-slate-600" x-text="it.Site || '—'"></td>
+                    <td class="px-4 py-3 font-medium text-slate-900" x-text="it.Marque || '—'"></td>
+                    <td class="px-4 py-3 text-slate-600" x-text="it.Modele || '—'"></td>
+                    <td class="px-4 py-3 text-slate-600" x-text="it.Quantite ?? '—'"></td>
+                    <td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" :class="etatClass(it.Etat)"><span class="w-1.5 h-1.5 rounded-full" :class="etatDot(it.Etat)"></span><span x-text="it.Etat || '—'"></span></span></td>
+                    <td class="px-4 py-3 text-slate-500 text-xs" x-text="it.Accessoires || '—'"></td>
+                    <td class="px-4 py-3 text-slate-600" x-text="it.Utilisateur || '—'"></td>
+                    <td class="px-4 py-3"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold" :class="statutClass(it.Statut)"><span class="w-1.5 h-1.5 rounded-full" :class="statutDot(it.Statut)"></span><span x-text="it.Statut || '—'"></span></span></td>
+                    <td class="px-4 py-3"><div class="flex items-center justify-end gap-1"><template x-if="it.Statut==='En stock'"><button @click="openAssign(it)" title="Attribuer" class="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-500 hover:text-emerald-700"><i data-lucide="user-plus" class="w-4 h-4"></i></button></template><button @click="openEdit(it)" class="p-1.5 rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600"><i data-lucide="pencil" class="w-4 h-4"></i></button><button @click="askDelete(it)" class="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table></div>
+            <div x-show="filtered().length>0" class="px-4 py-3 text-xs text-slate-400 border-t border-slate-100" x-text="filtered().length + ' matériel(s)'"></div>
+          </div>
+        </div>
+
+        <!-- ========================= UTILISATEURS ========================= -->
+        <div x-show="!loading && !error && view==='users'" class="space-y-4">
+          <h2 class="font-bold text-slate-900 text-lg">Utilisateurs &amp; matériel détenu</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <template x-for="u in userGroups()" :key="u.user">
+              <button @click="filterUser=u.user; go('inventaire')" class="text-left bg-white rounded-xl shadow-card border border-slate-100 p-4 hover:border-brand-300 transition">
+                <div class="flex items-center gap-3"><span class="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm" :class="avatarColor(u.user)" x-text="initials(u.user)"></span>
+                  <div class="min-w-0"><div class="font-semibold text-slate-800 truncate" x-text="u.user"></div><div class="text-xs text-slate-400 truncate" x-text="u.sites || '—'"></div></div>
+                  <span class="ml-auto text-lg font-extrabold text-brand-600" x-text="u.count"></span></div>
+                <div class="text-xs text-slate-400 mt-2 truncate" x-text="u.cats"></div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- ========================= RAPPORTS ========================= -->
+        <div x-show="!loading && !error && view==='rapports'" class="space-y-6">
+          <div class="flex items-center justify-between"><h2 class="font-bold text-slate-900 text-lg">Rapports</h2><button @click="filterStatut=''; problemOnly=false; exportCsv()" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg px-4 py-2"><i data-lucide="download" class="w-4 h-4"></i>Exporter tout (CSV)</button></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5"><h3 class="font-semibold text-slate-800 mb-3">Par catégorie</h3><div class="space-y-2"><template x-for="c in categoryDist()" :key="c.label"><div class="flex items-center gap-2 text-sm"><span class="w-2.5 h-2.5 rounded-full" :style="`background:${c.color}`"></span><span class="text-slate-600" x-text="c.label"></span><span class="ml-auto font-semibold" x-text="c.count"></span></div></template></div></div>
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5"><h3 class="font-semibold text-slate-800 mb-3">Par pays</h3><div class="space-y-2"><template x-for="s in siteDist()" :key="s.label"><div><div class="flex justify-between text-sm mb-1"><span class="text-slate-600" x-text="s.label"></span><span class="font-semibold" x-text="s.count"></span></div><div class="h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-brand-500" :style="`width:${s.pct}%`"></div></div></div></template></div></div>
+            <div class="bg-white rounded-xl shadow-card border border-slate-100 p-5"><h3 class="font-semibold text-slate-800 mb-3">Synthèse</h3>
+              <div class="space-y-2 text-sm"><div class="flex justify-between"><span class="text-slate-500">Total matériels</span><span class="font-bold" x-text="base().length"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Attribués</span><span class="font-bold" x-text="attribues().length"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">En stock</span><span class="font-bold" x-text="stockItems().length"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">À surveiller</span><span class="font-bold text-amber-600" x-text="alerts().length"></span></div>
+                <div class="flex justify-between"><span class="text-slate-500">Utilisateurs</span><span class="font-bold" x-text="userList().length"></span></div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== MODALE : ajout / édition ===== -->
+    <div x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6" @click.self="modalOpen=false">
+      <div x-show="modalOpen" x-transition class="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-xl max-h-[92vh] flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100"><h2 class="text-lg font-bold text-slate-900" x-text="editing ? 'Modifier le matériel' : 'Nouveau matériel'"></h2><button @click="modalOpen=false" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button></div>
+        <form @submit.prevent="save()" class="overflow-y-auto px-6 py-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+            <template x-for="f in cfg.fields" :key="f.internal">
+              <div :class="f.type==='note' ? 'sm:col-span-2' : ''">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5"><span x-text="f.label"></span><span x-show="f.required" class="text-red-500">*</span></label>
+                <template x-if="f.type==='choice'"><select x-model="form[f.internal]" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"><option value="">—</option><template x-for="c in f.choices" :key="c"><option x-text="c" :value="c"></option></template></select></template>
+                <template x-if="f.type==='note'"><textarea x-model="form[f.internal]" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500"></textarea></template>
+                <template x-if="f.type==='dateTime'"><input type="date" x-model="form[f.internal]" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500" /></template>
+                <template x-if="f.type==='number' || f.type==='currency'"><input type="number" step="any" x-model="form[f.internal]" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500" /></template>
+                <template x-if="f.type==='text'"><input type="text" x-model="form[f.internal]" :required="f.required" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500" /></template>
+              </div>
+            </template>
+          </div>
+          <div class="flex justify-end gap-2 mt-6"><button type="button" @click="modalOpen=false" class="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Annuler</button><button type="submit" :disabled="saving" class="px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-60 inline-flex items-center gap-2"><i x-show="saving" data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===== MODALE : suppression ===== -->
+    <div x-show="deleteTarget" x-transition.opacity class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6" @click.self="deleteTarget=null">
+      <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6"><div class="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center mb-4"><i data-lucide="alert-triangle" class="text-red-600"></i></div>
+        <h2 class="text-lg font-bold text-slate-900">Supprimer ce matériel ?</h2><p class="text-sm text-slate-500 mt-1">Suppression définitive de <strong x-text="(deleteTarget?.Marque||'')+' '+(deleteTarget?.Modele||'')"></strong> dans SharePoint.</p>
+        <div class="flex justify-end gap-2 mt-6"><button @click="deleteTarget=null" class="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Annuler</button><button @click="confirmDelete()" :disabled="saving" class="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold disabled:opacity-60">Supprimer</button></div>
+      </div>
+    </div>
+
+    <!-- ===== MODALE : attribution rapide ===== -->
+    <div x-show="assignTarget" x-transition.opacity class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6" @click.self="assignTarget=null">
+      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center"><i data-lucide="user-plus" class="text-emerald-600"></i></div>
+          <div><h2 class="text-lg font-bold text-slate-900">Attribuer le matériel</h2><p class="text-xs text-slate-400" x-text="(assignTarget?.Categorie||'')+' · '+(assignTarget?.Marque||'')+' '+(assignTarget?.Modele||'')"></p></div>
+        </div>
+        <label class="block text-sm font-medium text-slate-700 mb-1.5">Attribué à (nom et prénom) <span class="text-red-500">*</span></label>
+        <input x-model="assignForm.Utilisateur" type="text" placeholder="ex : Ndèye Fatou Mbengue" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500" autofocus @keydown.enter.prevent="confirmAssign()" />
+        <div class="grid grid-cols-2 gap-3 mt-3">
+          <div><label class="block text-sm font-medium text-slate-700 mb-1.5">Pays</label>
+            <select x-model="assignForm.Site" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"><option value="">—</option><template x-for="c in choicesFor('Site')" :key="c"><option x-text="c" :value="c"></option></template></select></div>
+          <div><label class="block text-sm font-medium text-slate-700 mb-1.5">État</label>
+            <select x-model="assignForm.Etat" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"><template x-for="c in choicesFor('Etat')" :key="c"><option x-text="c" :value="c"></option></template></select></div>
+        </div>
+        <p class="text-xs text-slate-400 mt-3">Le statut passera automatiquement à <strong class="text-emerald-600">Attribué</strong>.</p>
+        <div class="flex justify-end gap-2 mt-5">
+          <button @click="assignTarget=null" class="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Annuler</button>
+          <button @click="confirmAssign()" :disabled="saving" class="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold disabled:opacity-60 inline-flex items-center gap-2"><i x-show="saving" data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i>Attribuer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </template>
+
+  <!-- ===== Toasts ===== -->
+  <div class="fixed bottom-5 right-5 z-[60] space-y-2"><template x-for="t in toasts" :key="t.id"><div x-transition class="flex items-center gap-2.5 bg-white shadow-lg border border-slate-100 rounded-lg px-4 py-3 text-sm" :class="t.type==='error' ? 'text-red-700' : 'text-slate-700'"><i :data-lucide="t.type==='error' ? 'x-circle' : 'check-circle-2'" class="w-4 h-4" :class="t.type==='error' ? 'text-red-500' : 'text-emerald-500'"></i><span x-text="t.msg"></span></div></template></div>
+
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

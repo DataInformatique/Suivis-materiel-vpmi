@@ -1,0 +1,33 @@
+# Déploiement Render — "Blueprint"
+# Sur render.com : New + → Blueprint → connectez ce dépôt.
+# Render lit ce fichier et crée le service. Renseignez ensuite les
+# variables marquées "sync: false" dans le tableau de bord Render
+# (onglet Environment) — elles ne sont JAMAIS stockées dans le code.
+services:
+  - type: web
+    name: suivi-materiel-vpmi
+    runtime: python
+    plan: free
+    region: frankfurt          # serveur en Europe
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # ----- Secrets : à saisir dans Render (Environment) -----
+      - key: AZURE_TENANT_ID
+        sync: false
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+      - key: SHAREPOINT_HOSTNAME
+        sync: false
+      - key: SHAREPOINT_SITE_PATH
+        sync: false
+      - key: APP_PASSWORD          # mot de passe d'accès à l'app (recommandé)
+        sync: false
+      # ----- Valeur fixe -----
+      - key: SHAREPOINT_LIST_NAME
+        value: "Suivi Materiel"

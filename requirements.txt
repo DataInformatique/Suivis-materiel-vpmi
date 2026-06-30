@@ -1,0 +1,10 @@
+# Versions souples : pip choisit des wheels pré-compilés
+# compatibles avec votre version de Python (y compris 3.14),
+# pour éviter toute compilation (pas besoin de Rust ni de MSVC).
+fastapi>=0.115
+uvicorn>=0.30          # version "simple" : pur Python (h11), pas de httptools/uvloop à compiler
+pydantic>=2.11         # pydantic-core fournit des wheels récents (cp314)
+msal>=1.31
+requests>=2.32
+python-dotenv>=1.0
+openpyxl>=3.1

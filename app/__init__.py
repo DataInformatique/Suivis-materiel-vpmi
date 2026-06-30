@@ -1,0 +1,1 @@
+"""Application Suivi Matériel VPMI."""
