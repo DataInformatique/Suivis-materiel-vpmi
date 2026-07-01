@@ -90,10 +90,13 @@ function suiviApp() {
     go(id) {
       this.activeNav = id;
       this.sidebarOpen = false;
+      // chaque navigation repart propre : on remet tous les filtres à zéro
+      this.filterCat = ""; this.filterSite = ""; this.filterEtat = ""; this.filterUser = ""; this.search = "";
+      this.filterStatut = ""; this.problemOnly = false;
+      this.page = 1; this.attrPage = 1; this.stockPage = 1;
       if (id === "dashboard" || id === "users" || id === "rapports") { this.view = id; }
       else { // vues "tableau" avec présélection
         this.view = "parc";
-        this.filterStatut = ""; this.problemOnly = false;
         if (id === "attribue") this.filterStatut = "Attribué";
         else if (id === "stock") this.filterStatut = "En stock";
         else if (id === "maintenance") this.problemOnly = true;
