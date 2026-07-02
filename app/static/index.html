@@ -226,7 +226,7 @@
                   <div class="flex items-center gap-3">
                     <span class="w-9 h-9 rounded-full flex items-center justify-center font-semibold text-xs shrink-0" :class="avatarColor(it.Utilisateur)" x-text="initials(it.Utilisateur)"></span>
                     <div class="min-w-0 flex-1"><div class="text-sm font-medium text-slate-800 truncate" x-text="it.Utilisateur || '—'"></div><div class="text-xs text-slate-400 truncate" x-text="it.Categorie + (it.Modele ? ' · '+it.Modele : '')"></div></div>
-                    <div class="text-[11px] text-slate-400 text-right shrink-0" x-text="fmtDate(it._created)"></div>
+                    <div class="text-[11px] text-slate-400 text-right shrink-0" x-text="fmtDate(it._modified || it._created)"></div>
                   </div>
                 </template>
                 <p x-show="recentAttributions().length===0" class="text-sm text-slate-400 text-center py-4">Aucune attribution.</p>

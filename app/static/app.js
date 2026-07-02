@@ -207,8 +207,9 @@ function suiviApp() {
     // ---------- alertes & attributions ----------
     alerts() { return this.base().filter((i) => BAD_ETATS.includes(i.Etat)); },
     recentAttributions() {
+      // trié par dernière modification (l'attribution/édition la plus récente en premier)
       return this.items.filter((i) => i.Statut === "Attribué")
-        .sort((a, b) => (b._created || "").localeCompare(a._created || "")).slice(0, 6);
+        .sort((a, b) => (b._modified || b._created || "").localeCompare(a._modified || a._created || "")).slice(0, 6);
     },
     initials(name) {
       if (!name) return "?";
